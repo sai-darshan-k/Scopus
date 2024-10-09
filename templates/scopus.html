@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scopus Paper Data Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        input[type="submit"], button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover, button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scopus Paper Data Extractor</h1>
+    <form action="{{ url_for('get_data') }}" method="get" id="search-form">
+        <label for="title">Enter Paper Title:</label>
+        <input type="text" id="title" name="title" required><br>
+        
+        <label for="author_name">Enter Author Name (Optional):</label>
+        <input type="text" id="author_name" name="author_name"><br>
+        
+        <input type="submit" value="Get Data">
+    </form>
+    
+    <div id="result"></div>
+
+    <button id="download" style="display:none;">Download Data</button>
+
+    <script>
+        const form = document.querySelector('#search-form');
+        const resultDiv = document.getElementById('result');
+        const downloadButton = document.getElementById('download');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const title = document.getElementById('title').value;
+            const author_name = document.getElementById('author_name').value;
+
+            const response = await fetch(`/get_data?title=${encodeURIComponent(title)}&author_name=${encodeURIComponent(author_name)}`);
+            const data = await response.json();
+
+            resultDiv.innerHTML = '<h2>Results:</h2>';
+            if (data.length > 0) {
+                let tableHTML = '<table><tr><th>Paper Title</th><th>Citations</th><th>Year</th><th>Authors</th></tr>';
+                data.forEach(paper => {
+                    tableHTML += `
+                        <tr>
+                            <td>${paper['Paper Title']}</td>
+                            <td>${paper.Citations}</td>
+                            <td>${paper.Year}</td>
+                            <td>${paper.Authors}</td>
+                        </tr>
+                    `;
+                });
+                tableHTML += '</table>';
+                resultDiv.innerHTML += tableHTML;
+                downloadButton.style.display = 'block'; // Show download button
+            } else {
+                resultDiv.innerHTML += '<p>No results found.</p>';
+                downloadButton.style.display = 'none'; // Hide download button
+            }
+        });
+
+        downloadButton.addEventListener('click', () => {
+            const title = document.getElementById('title').value;
+            const author_name = document.getElementById('author_name').value;
+
+            window.location.href = `/download_data?title=${encodeURIComponent(title)}&author_name=${encodeURIComponent(author_name)}`;
+        });
+    </script>
+</body>
+</html>
